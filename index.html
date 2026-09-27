@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>モノモチの木</title>
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="モノモチの木">
+<meta property="og:description" content="物持ちがいいあなたのためのアプリ">
+<meta property="og:image" content="./ogp.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="モノモチの木">
+<meta name="twitter:description" content="物持ちがいいあなたのためのアプリ">
+<meta name="twitter:image" content="./ogp.png">
+
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="theme-color" content="#1a1614">
+
+<style>
+:root{
+  --bg:#1a1614;
+  --bg2:#221c18;
+  --panel:#2a2320;
+  --panel2:#332b26;
+  --border:#453a33;
+  --text:#f2e8da;
+  --muted:#a89a88;
+  --blue:#5b9bd5;
+  --orange:#e8871e;
+  --green:#4caf8a;
+  --pink:#e8659c;
+  --gold:#e8c257;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;}
+html,body{
+  margin:0;padding:0;height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Hiragino Sans","Yu Gothic",-apple-system,BlinkMacSystemFont,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+  overflow-x:hidden;
+}
+button{font-family:inherit;}
+.app{min-height:100%;display:flex;flex-direction:column;}
+
+/* header */
+header{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.8rem 1rem;background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  gap:0.5rem;
+}
+header h1{font-size:0.95rem;margin:0;line-height:1.4;font-weight:600;}
+header h1 small{display:block;font-size:0.65rem;color:var(--muted);font-weight:400;}
+.header-btns{display:flex;gap:0.4rem;flex-shrink:0;}
+.icon-btn{
+  min-width:44px;min-height:44px;border-radius:10px;
+  background:var(--panel);border:1px solid var(--border);color:var(--text);
+  font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:transform .1s;
+}
+.icon-btn:active{transform:scale(0.92);background:var(--panel2);}
+
+/* main layout: portrait default */
+main{flex:1;display:flex;flex-direction:column;padding-bottom:2rem;}
+.tree-zone{
+  padding:1rem;display:flex;justify-content:center;align-items:center;
+  background:radial-gradient(ellipse at center 30%, #2c241f 0%, var(--bg) 70%);
+}
+.tree-zone svg{width:100%;max-width:360px;height:auto;}
+.body-zone{padding:0 1rem;display:flex;flex-direction:column;gap:1rem;}
+
+.tabs{display:flex;gap:0.5rem;overflow-x:auto;padding-bottom:0.3rem;}
+.tab{
+  flex-shrink:0;min-height:44px;padding:0.5rem 0.9rem;border-radius:999px;
+  background:var(--panel);border:1px solid var(--border);color:var(--text);
+  font-size:0.85rem;cursor:pointer;display:flex;align-items:center;gap:0.4rem;
+}
+.tab.active{background:var(--panel2);border-color:var(--gold);}
+.tab .mark{font-size:0.9rem;}
+.tab-add{color:var(--gold);border-style:dashed;}
+
+.detail-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:14px;
+  padding:1rem;display:flex;flex-direction:column;gap:0.8rem;
+}
+.detail-card h2{margin:0;font-size:1.1rem;display:flex;align-items:center;gap:0.4rem;}
+.duration{font-size:0.8rem;color:var(--muted);}
+.memory-box textarea{
+  width:100%;min-height:4.5rem;background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);padding:0.6rem;font-size:0.85rem;resize:vertical;
+}
+.memory-label{font-size:0.75rem;color:var(--muted);margin-bottom:0.3rem;}
+.check-btn{
+  min-height:48px;border-radius:12px;border:none;background:var(--gold);color:#2a2015;
+  font-weight:700;font-size:0.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.4rem;
+}
+.check-btn:active{transform:scale(0.97);}
+.timeline{display:flex;flex-direction:column;gap:0.4rem;max-height:9rem;overflow-y:auto;}
+.timeline-item{
+  font-size:0.78rem;color:var(--muted);display:flex;gap:0.5rem;
+  border-left:2px solid var(--border);padding-left:0.6rem;
+}
+.timeline-item b{color:var(--text);font-weight:500;}
+.empty-note{color:var(--muted);font-size:0.85rem;text-align:center;padding:2rem 1rem;}
+
+/* landscape: two column book layout */
+@media (orientation: landscape){
+  main{flex-direction:row;flex:1;}
+  .tree-zone{flex:1;height:auto;padding:1rem;}
+  .body-zone{flex:1;padding:1rem;overflow-y:auto;max-height:calc(100vh - 70px);}
+}
+
+/* modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(10,8,6,0.75);z-index:50;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.modal{
+  background:var(--panel);border-radius:16px 16px 0 0;padding:1.2rem;
+  width:100%;max-width:480px;max-height:85vh;overflow-y:auto;
+  border-top:1px solid var(--border);
+}
+@media (min-width:520px){
+  .modal-overlay{align-items:center;}
+  .modal{border-radius:16px;}
+}
+.modal h3{margin-top:0;font-size:1.05rem;}
+.modal .close-row{display:flex;justify-content:flex-end;}
+.field{display:flex;flex-direction:column;gap:0.3rem;margin-bottom:0.9rem;}
+.field label{font-size:0.8rem;color:var(--muted);}
+.field input[type=text],.field input[type=date],.field select{
+  min-height:44px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);padding:0.5rem 0.7rem;font-size:0.95rem;
+}
+.switch-row{display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0;}
+.switch{position:relative;width:48px;height:28px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:var(--border);border-radius:999px;cursor:pointer;transition:.2s;}
+.slider:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.switch input:checked + .slider{background:var(--green);}
+.switch input:checked + .slider:before{transform:translateX(20px);}
+.primary-btn{
+  width:100%;min-height:48px;border-radius:12px;border:none;background:var(--gold);
+  color:#2a2015;font-weight:700;cursor:pointer;margin-top:0.4rem;
+}
+.ghost-btn{
+  width:100%;min-height:44px;border-radius:12px;border:1px solid var(--border);background:transparent;
+  color:var(--muted);cursor:pointer;margin-top:0.4rem;
+}
+.help-block{font-size:0.85rem;line-height:1.7;color:var(--text);margin-bottom:1rem;}
+.help-block b{color:var(--gold);}
+
+/* lock screen */
+#lockScreen{
+  position:fixed;inset:0;background:var(--bg);z-index:100;
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:1rem;padding:1rem;
+}
+#lockScreen.show{display:flex;}
+#lockDots{display:flex;gap:0.8rem;}
+.lock-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--muted);}
+.lock-dot.filled{background:var(--gold);border-color:var(--gold);}
+.keypad{display:grid;grid-template-columns:repeat(3,64px);gap:0.7rem;}
+.keypad button{
+  width:64px;height:64px;border-radius:50%;background:var(--panel);border:1px solid var(--border);
+  color:var(--text);font-size:1.2rem;cursor:pointer;
+}
+.keypad button:active{background:var(--panel2);}
+#lockError{color:var(--pink);font-size:0.8rem;min-height:1.2rem;}
+
+/* install banner */
+#installBanner{
+  position:fixed;left:0.7rem;right:0.7rem;bottom:calc(0.7rem + env(safe-area-inset-bottom,0px));
+  background:var(--panel);border:1px solid var(--gold);border-radius:14px;padding:0.8rem 1rem;
+  display:none;align-items:center;gap:0.7rem;z-index:60;box-shadow:0 4px 20px rgba(0,0,0,0.4);
+  transform:translateY(120%);transition:transform .3s;
+}
+#installBanner.show{display:flex;transform:translateY(0);}
+#installBanner span{flex:1;font-size:0.82rem;}
+#installBanner button{min-height:40px;padding:0 0.8rem;border-radius:8px;border:none;background:var(--gold);color:#2a2015;font-weight:700;}
+#installBanner .dismiss{background:transparent;color:var(--muted);border:1px solid var(--border);}
+
+/* inspection mode */
+#inspectionOverlay{
+  position:fixed;inset:0;background:var(--bg);z-index:90;display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;padding:1.5rem;text-align:center;
+}
+#inspectionOverlay.show{display:flex;}
+#inspectionOverlay h2{margin:0;font-size:1.2rem;}
+#inspectionOverlay .mark-big{font-size:2.4rem;}
+.glow-flash circle{animation:flashGlow 1.4s ease infinite;}
+@keyframes flashGlow{0%,100%{opacity:0.5;}50%{opacity:1;}}
+
+.toast{
+  position:fixed;left:50%;bottom:max(1.2rem, calc(1.2rem + env(safe-area-inset-bottom,0px)));
+  transform:translateX(-50%);background:var(--panel2);border:1px solid var(--gold);
+  padding:0.6rem 1rem;border-radius:999px;font-size:0.8rem;z-index:120;opacity:0;transition:opacity .3s;
+  pointer-events:none;
+}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="lockScreen">
+  <div style="font-size:2rem;">🌳</div>
+  <div style="font-size:0.9rem;color:var(--muted);">暗証番号を入力してください</div>
+  <div id="lockDots"></div>
+  <div id="lockError"></div>
+  <div class="keypad" id="keypad"></div>
+</div>
+
+<div id="inspectionOverlay"></div>
+<div id="toast" class="toast"></div>
+<div id="installBanner">
+  <span>📲 ホーム画面に追加してアプリとして使う</span>
+  <button id="installBtn">追加</button>
+  <button class="dismiss" id="installDismiss">閉じる</button>
+</div>
+
+<div class="app">
+  <header>
+    <h1>モノモチの木<small>物持ちがいいあなたのためのアプリ</small></h1>
+    <div class="header-btns">
+      <button class="icon-btn" id="helpBtn" title="使い方" aria-label="使い方">❓</button>
+      <button class="icon-btn" id="settingsBtn" title="設定" aria-label="設定">⚙️</button>
+    </div>
+  </header>
+  <main>
+    <div class="tree-zone">
+      <svg id="treeSvg" viewBox="0 0 300 340" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="body-zone">
+      <div class="tabs" id="tabs"></div>
+      <div id="detailArea"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+
+var CATS = [
+  {name:'傘', color:'#5b9bd5', mark:'●'},
+  {name:'靴', color:'#e8871e', mark:'▲'},
+  {name:'鞄', color:'#4caf8a', mark:'■'},
+  {name:'その他', color:'#e8659c', mark:'★'}
+];
+
+var state = { items: [], settings: { passcodeEnabled:false, passcode:'', inspectionDate:'', installDismissed:false }, selectedId:null };
+
+function safeGetJSON(key, fallback){
+  try{
+    var raw = localStorage.getItem(key);
+    if(!raw) return fallback;
+    var parsed = JSON.parse(raw);
+    return parsed || fallback;
+  }catch(e){ return fallback; }
+}
+function safeSetJSON(key, val){
+  try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){ /* memory-only fallback, ignore */ }
+}
+
+function loadData(){
+  state.items = safeGetJSON('monomochi_items', []);
+  state.settings = Object.assign({passcodeEnabled:false, passcode:'', inspectionDate:'', installDismissed:false}, safeGetJSON('monomochi_settings', {}));
+  if(state.items.length && !state.selectedId){ state.selectedId = state.items[0].id; }
+}
+function saveItems(){ safeSetJSON('monomochi_items', state.items); }
+function saveSettings(){ safeSetJSON('monomochi_settings', state.settings); }
+
+function uid(){ return 'i'+Date.now()+Math.random().toString(36).slice(2,7); }
+
+function showToast(msg){
+  try{
+    var t = document.getElementById('toast');
+    if(!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 1800);
+  }catch(e){}
+}
+
+/* ---------- tree rendering ---------- */
+function hashStr(s){
+  var h=0; for(var i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
+  return h;
+}
+function renderTree(){
+  try{
+    var svg = document.getElementById('treeSvg');
+    if(!svg) return;
+    var lights = [];
+    state.items.forEach(function(it){
+      var cat = CATS[it.categoryIndex] || CATS[3];
+      (it.checks||[]).forEach(function(c, idx){
+        lights.push({ color: cat.color, mark: cat.mark, seed: hashStr(it.id + '_' + idx) });
+      });
+    });
+    var canopyPoints = [[150,60],[150,340]];
+    var html = '';
+    html += '<defs>' +
+      '<radialGradient id="canopyGrad" cx="50%" cy="35%" r="65%">' +
+      '<stop offset="0%" stop-color="#3a2f27"/><stop offset="100%" stop-color="#1f1813"/>' +
+      '</radialGradient></defs>';
+    html += '<rect x="0" y="0" width="300" height="340" fill="none"/>';
+    html += '<path d="M145,340 L150,190 L155,340 Z" fill="#120d0a"/>';
+    html += '<path d="M150,220 Q100,205 75,175" stroke="#120d0a" stroke-width="6" fill="none" stroke-linecap="round"/>';
+    html += '<path d="M150,210 Q210,195 235,165" stroke="#120d0a" stroke-width="6" fill="none" stroke-linecap="round"/>';
+    html += '<ellipse cx="150" cy="140" rx="120" ry="105" fill="url(#canopyGrad)"/>';
+    var maxLights = Math.min(lights.length, 60);
+    for(var i=0;i<maxLights;i++){
+      var l = lights[i];
+      var ang = (l.seed % 360) * Math.PI/180;
+      var rad = 25 + (l.seed % 90);
+      var cx = 150 + Math.cos(ang)*rad*0.95;
+      var cy = 140 + Math.sin(ang)*rad*0.62 - 10;
+      var r = 3.5 + (l.seed % 3);
+      html += '<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+(r+3)+'" fill="'+l.color+'" opacity="0.18"/>';
+      html += '<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+r+'" fill="'+l.color+'" opacity="0.9"/>';
+      html += '<text x="'+cx.toFixed(1)+'" y="'+(cy+3.2).toFixed(1)+'" font-size="6" text-anchor="middle" fill="#1a1614" opacity="0.85">'+l.mark+'</text>';
+    }
+    if(lights.length === 0){
+      html += '<text x="150" y="140" text-anchor="middle" font-size="12" fill="#a89a88">まだ灯りはありません</text>';
+    }
+    svg.innerHTML = html;
+  }catch(e){ /* leave svg as-is on error */ }
+}
+
+/* ---------- tabs & detail ---------- */
+function fmtDuration(startDateStr){
+  try{
+    var start = new Date(startDateStr);
+    var now = new Date();
+    var days = Math.max(0, Math.floor((now - start)/86400000));
+    var years = Math.floor(days/365);
+    var months = Math.floor((days%365)/30);
+    var out = '';
+    if(years>0) out += years+'年';
+    if(months>0 || years===0) out += months+'ヶ月';
+    out += '（'+days+'日目）';
+    return out;
+  }catch(e){ return ''; }
+}
+
+function renderTabs(){
+  var tabs = document.getElementById('tabs');
+  if(!tabs) return;
+  var html = '';
+  state.items.forEach(function(it){
+    var cat = CATS[it.categoryIndex] || CATS[3];
+    var active = it.id === state.selectedId ? ' active' : '';
+    html += '<button class="tab'+active+'" data-id="'+it.id+'"><span class="mark" style="color:'+cat.color+'">'+cat.mark+'</span>'+escapeHtml(it.name)+'</button>';
+  });
+  html += '<button class="tab tab-add" id="addItemBtn">＋ 追加</button>';
+  tabs.innerHTML = html;
+  Array.prototype.forEach.call(tabs.querySelectorAll('.tab[data-id]'), function(btn){
+    btn.addEventListener('click', function(){
+      state.selectedId = btn.getAttribute('data-id');
+      renderTabs(); renderDetail();
+    });
+  });
+  var addBtn = document.getElementById('addItemBtn');
+  if(addBtn) addBtn.addEventListener('click', openAddItemModal);
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
+
+function renderDetail(){
+  var area = document.getElementById('detailArea');
+  if(!area) return;
+  var it = state.items.find(function(x){ return x.id === state.selectedId; });
+  if(!it){
+    area.innerHTML = '<div class="empty-note">まだアイテムがありません。「＋ 追加」から、あなたの大切な物持ちアイテムを登録しましょう。</div>';
+    return;
+  }
+  var cat = CATS[it.categoryIndex] || CATS[3];
+  var checks = (it.checks||[]).slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
+  var timelineHtml = checks.length ?
+    checks.map(function(c){
+      var d = new Date(c.date);
+      var label = isNaN(d.getTime()) ? c.date : (d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate());
+      return '<div class="timeline-item"><b>'+label+'</b><span>お手入れ・無事確認</span></div>';
+    }).join('') :
+    '<div class="timeline-item">まだ記録がありません</div>';
+
+  area.innerHTML =
+    '<div class="detail-card">' +
+      '<h2><span style="color:'+cat.color+'">'+cat.mark+'</span>'+escapeHtml(it.name)+'</h2>' +
+      '<div class="duration">'+escapeHtml(cat.name)+' ・ '+fmtDuration(it.startDate)+'</div>' +
+      '<div class="memory-box">' +
+        '<div class="memory-label">出会いの記憶</div>' +
+        '<textarea id="memoryText" placeholder="いつ、どこで出会ったか。そっと書き留めておきましょう。">'+escapeHtml(it.memory||'')+'</textarea>' +
+      '</div>' +
+      '<button class="check-btn" id="checkBtn">🕯️ 今日の無事を確認・お手入れ完了</button>' +
+      '<div>' +
+        '<div class="memory-label">歩みのタイムライン</div>' +
+        '<div class="timeline">'+timelineHtml+'</div>' +
+      '</div>' +
+    '</div>';
+
+  var mem = document.getElementById('memoryText');
+  if(mem){
+    mem.addEventListener('blur', function(){
+      try{
+        it.memory = mem.value;
+        saveItems();
+      }catch(e){}
+    });
+  }
+  var checkBtn = document.getElementById('checkBtn');
+  if(checkBtn){
+    checkBtn.addEventListener('click', function(){
+      try{
+        it.checks = it.checks || [];
+        it.checks.push({ date: new Date().toISOString() });
+        saveItems();
+        renderTree();
+        renderDetail();
+        showToast('灯りがひとつ、灯りました');
+      }catch(e){}
+    });
+  }
+}
+
+/* ---------- add item ---------- */
+function openAddItemModal(){
+  var catOptions = CATS.map(function(c,i){ return '<option value="'+i+'">'+c.mark+' '+c.name+'</option>'; }).join('');
+  openModal(
+    '<h3>アイテムを追加</h3>' +
+    '<div class="field"><label>名前</label><input type="text" id="newItemName" placeholder="例：茶色の革靴"></div>' +
+    '<div class="field"><label>カテゴリ</label><select id="newItemCat">'+catOptions+'</select></div>' +
+    '<div class="field"><label>使い始めた日</label><input type="date" id="newItemDate"></div>' +
+    '<button class="primary-btn" id="saveNewItem">この子を迎える</button>'
+  );
+  var todayStr = new Date().toISOString().slice(0,10);
+  var dateInput = document.getElementById('newItemDate');
+  if(dateInput) dateInput.value = todayStr;
+  var saveBtn = document.getElementById('saveNewItem');
+  if(saveBtn){
+    saveBtn.addEventListener('click', function(){
+      try{
+        var nameEl = document.getElementById('newItemName');
+        var catEl = document.getElementById('newItemCat');
+        var dateEl = document.getElementById('newItemDate');
+        var name = (nameEl && nameEl.value.trim()) || '名もなき相棒';
+        var catIdx = catEl ? parseInt(catEl.value,10) : 3;
+        var dateVal = (dateEl && dateEl.value) || todayStr;
+        var newItem = { id: uid(), name: name, categoryIndex: catIdx, startDate: dateVal, memory:'', checks:[] };
+        state.items.push(newItem);
+        state.selectedId = newItem.id;
+        saveItems();
+        closeModal();
+        renderTabs(); renderDetail(); renderTree();
+      }catch(e){}
+    });
+  }
+}
+
+/* ---------- modal helpers ---------- */
+function openModal(innerHtml){
+  closeModal();
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'activeModalOverlay';
+  overlay.innerHTML = '<div class="modal">' +
+    '<div class="close-row"><button class="icon-btn" id="modalCloseBtn">✕</button></div>' +
+    innerHtml + '</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e){ if(e.target === overlay) closeModal(); });
+  var closeBtn = document.getElementById('modalCloseBtn');
+  if(closeBtn) closeBtn.addEventListener('click', closeModal);
+}
+function closeModal(){
+  var o = document.getElementById('activeModalOverlay');
+  if(o && o.parentNode) o.parentNode.removeChild(o);
+}
+
+/* ---------- help modal ---------- */
+function openHelp(){
+  openModal(
+    '<h3>使い方</h3>' +
+    '<div class="help-block"><b>モノモチの木とは</b><br>大切に使い続けているアイテムと過ごした時間を、静かに記録する手帳アプリです。使うたびに「無事を確認」すると、木にひとつずつ灯りが灯ります。</div>' +
+    '<div class="help-block"><b>丸い灯りの見方</b><br>色と形はアイテムのカテゴリを表します。青の●は傘、橙の▲は靴、緑の■は鞄、桃の★はその他の持ち物です。灯りの数はお手入れした回数です。</div>' +
+    '<div class="help-block"><b>年次点検日の使い方</b><br>設定画面で年に一度の点検日（誕生日や記念日など）を決めておくと、その日に通知が届き、すべてのアイテムをまとめて確認できます。</div>'
+  );
+}
+
+/* ---------- settings modal ---------- */
+function openSettings(){
+  openModal(
+    '<h3>設定</h3>' +
+    '<div class="switch-row"><span>パスコードロック</span>' +
+    '<label class="switch"><input type="checkbox" id="passToggle" '+(state.settings.passcodeEnabled?'checked':'')+'><span class="slider"></span></label></div>' +
+    '<div class="field" id="passField" style="display:'+(state.settings.passcodeEnabled?'flex':'none')+'">' +
+      '<label>4桁の暗証番号</label>' +
+      '<input type="text" inputmode="numeric" maxlength="4" id="passInput" placeholder="0000" value="'+escapeHtml(state.settings.passcode||'')+'">' +
+    '</div>' +
+    '<div class="field"><label>年次点検日</label><input type="date" id="inspDate" value="'+escapeHtml(dateForInput(state.settings.inspectionDate))+'"></div>' +
+    '<button class="ghost-btn" id="notifPermBtn">🔔 通知を許可する</button>' +
+    '<button class="primary-btn" id="saveSettingsBtn">保存する</button>' +
+    '<button class="ghost-btn" id="startInspectionBtn">🕯️ 特別点検を今すぐ始める</button>'
+  );
+  var toggle = document.getElementById('passToggle');
+  var passField = document.getElementById('passField');
+  if(toggle && passField){
+    toggle.addEventListener('change', function(){
+      passField.style.display = toggle.checked ? 'flex' : 'none';
+    });
+  }
+  var notifBtn = document.getElementById('notifPermBtn');
+  if(notifBtn){
+    notifBtn.addEventListener('click', function(){
+      try{
+        if('Notification' in window){
+          Notification.requestPermission().then(function(perm){
+            showToast(perm === 'granted' ? '通知を許可しました' : '通知が許可されませんでした');
+          });
+        }else{
+          showToast('この端末は通知に対応していません');
+        }
+      }catch(e){}
+    });
+  }
+  var saveBtn = document.getElementById('saveSettingsBtn');
+  if(saveBtn){
+    saveBtn.addEventListener('click', function(){
+      try{
+        var passOn = document.getElementById('passToggle').checked;
+        var passVal = (document.getElementById('passInput').value || '').replace(/\D/g,'').slice(0,4);
+        var inspVal = document.getElementById('inspDate').value;
+        state.settings.passcodeEnabled = passOn && passVal.length === 4;
+        if(passVal.length === 4) state.settings.passcode = passVal;
+        state.settings.inspectionDate = inspVal || '';
+        saveSettings();
+        closeModal();
+        showToast('設定を保存しました');
+      }catch(e){}
+    });
+  }
+  var inspBtn = document.getElementById('startInspectionBtn');
+  if(inspBtn){
+    inspBtn.addEventListener('click', function(){
+      closeModal();
+      startInspectionMode();
+    });
+  }
+}
+function dateForInput(mmdd){
+  if(!mmdd) return '';
+  return mmdd;
+}
+
+/* ---------- passcode lock ---------- */
+var lockInput = '';
+function buildKeypad(){
+  var keypad = document.getElementById('keypad');
+  if(!keypad) return;
+  var keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+  keypad.innerHTML = keys.map(function(k){
+    if(k==='') return '<div></div>';
+    return '<button data-k="'+k+'">'+k+'</button>';
+  }).join('');
+  Array.prototype.forEach.call(keypad.querySelectorAll('button'), function(btn){
+    btn.addEventListener('click', function(){
+      var k = btn.getAttribute('data-k');
+      try{
+        if(k === '⌫'){ lockInput = lockInput.slice(0,-1); }
+        else if(lockInput.length < 4){ lockInput += k; }
+        renderLockDots();
+        if(lockInput.length === 4){
+          if(lockInput === state.settings.passcode){
+            hideLock();
+          }else{
+            var err = document.getElementById('lockError');
+            if(err) err.textContent = '暗証番号が違います';
+            setTimeout(function(){ lockInput=''; renderLockDots(); if(err) err.textContent=''; }, 500);
+          }
+        }
+      }catch(e){}
+    });
+  });
+}
+function renderLockDots(){
+  var dots = document.getElementById('lockDots');
+  if(!dots) return;
+  var html = '';
+  for(var i=0;i<4;i++){ html += '<div class="lock-dot'+(i<lockInput.length?' filled':'')+'"></div>'; }
+  dots.innerHTML = html;
+}
+function showLock(){
+  var el = document.getElementById('lockScreen');
+  if(el) el.classList.add('show');
+  lockInput=''; renderLockDots();
+}
+function hideLock(){
+  var el = document.getElementById('lockScreen');
+  if(el) el.classList.remove('show');
+}
+function maybeShowLock(){
+  if(state.settings.passcodeEnabled && state.settings.passcode){ showLock(); } else { hideLock(); }
+}
+
+/* ---------- inspection mode ---------- */
+var inspectionQueue = [];
+var inspectionIdx = 0;
+function startInspectionMode(){
+  inspectionQueue = state.items.slice();
+  inspectionIdx = 0;
+  if(inspectionQueue.length === 0){ showToast('アイテムがありません'); return; }
+  renderInspectionStep();
+}
+function renderInspectionStep(){
+  var overlay = document.getElementById('inspectionOverlay');
+  if(!overlay) return;
+  overlay.classList.add('show');
+  if(inspectionIdx >= inspectionQueue.length){
+    overlay.innerHTML =
+      '<div class="mark-big">✨🌳✨</div>' +
+      '<h2>今年も無事、点検完了です</h2>' +
+      '<div style="color:var(--muted);font-size:0.85rem;">すべての大切なモノたちの無事を確認しました</div>' +
+      '<button class="primary-btn" id="closeInspection" style="max-width:220px;">閉じる</button>';
+    document.getElementById('closeInspection').addEventListener('click', function(){
+      overlay.classList.remove('show');
+      renderTree(); renderDetail();
+    });
+    return;
+  }
+  var it = inspectionQueue[inspectionIdx];
+  var cat = CATS[it.categoryIndex] || CATS[3];
+  overlay.innerHTML =
+    '<div class="mark-big" style="color:'+cat.color+'">'+cat.mark+'</div>' +
+    '<h2>'+escapeHtml(it.name)+'</h2>' +
+    '<div style="color:var(--muted);font-size:0.85rem;">'+(inspectionIdx+1)+' / '+inspectionQueue.length+'</div>' +
+    '<button class="primary-btn" id="stepCheckBtn" style="max-width:260px;">🕯️ 無事を確認</button>';
+  document.getElementById('stepCheckBtn').addEventListener('click', function(){
+    try{
+      it.checks = it.checks || [];
+      it.checks.push({ date: new Date().toISOString() });
+      saveItems();
+    }catch(e){}
+    inspectionIdx++;
+    renderInspectionStep();
+  });
+}
+function checkAnnualNotification(){
+  try{
+    if(!state.settings.inspectionDate) return;
+    var today = new Date();
+    var mmdd = (today.getMonth()+1)+'-'+today.getDate();
+    var saved = state.settings.inspectionDate;
+    var savedDate = new Date(saved);
+    var savedMmdd = isNaN(savedDate.getTime()) ? saved : (savedDate.getMonth()+1)+'-'+savedDate.getDate();
+    if(mmdd === savedMmdd && 'Notification' in window && Notification.permission === 'granted'){
+      var key = 'monomochi_notified_'+today.getFullYear();
+      if(!localStorage.getItem(key)){
+        new Notification('モノモチの木', { body: '今日はモノモチの木の点検日です。大切なモノたちの無事を確認しましょう' });
+        try{ localStorage.setItem(key,'1'); }catch(e){}
+      }
+    }
+  }catch(e){}
+}
+
+/* ---------- install prompt ---------- */
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e){
+  try{
+    e.preventDefault();
+    deferredPrompt = e;
+    if(!state.settings.installDismissed){
+      var b = document.getElementById('installBanner');
+      if(b) b.classList.add('show');
+    }
+  }catch(err){}
+});
+
+/* ---------- service worker ---------- */
+try{
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js').catch(function(){ /* ignore registration failure */ });
+    });
+  }
+}catch(e){ /* ignore */ }
+
+/* ---------- init ---------- */
+function init(){
+  loadData();
+  buildKeypad();
+  renderLockDots();
+  renderTabs();
+  renderDetail();
+  renderTree();
+  maybeShowLock();
+  checkAnnualNotification();
+
+  var helpBtn = document.getElementById('helpBtn');
+  if(helpBtn) helpBtn.addEventListener('click', openHelp);
+  var settingsBtn = document.getElementById('settingsBtn');
+  if(settingsBtn) settingsBtn.addEventListener('click', openSettings);
+
+  var installBtn = document.getElementById('installBtn');
+  if(installBtn){
+    installBtn.addEventListener('click', function(){
+      try{
+        var b = document.getElementById('installBanner');
+        if(b) b.classList.remove('show');
+        if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt = null; }
+      }catch(e){}
+    });
+  }
+  var installDismiss = document.getElementById('installDismiss');
+  if(installDismiss){
+    installDismiss.addEventListener('click', function(){
+      try{
+        var b = document.getElementById('installBanner');
+        if(b) b.classList.remove('show');
+        state.settings.installDismissed = true;
+        saveSettings();
+      }catch(e){}
+    });
+  }
+
+  document.addEventListener('visibilitychange', function(){
+    try{
+      if(document.visibilityState === 'visible'){
+        maybeShowLock();
+        checkAnnualNotification();
+      }
+    }catch(e){}
+  });
+}
+
+try{ init(); }catch(e){ /* fail-safe: avoid blank white screen */
+  try{
+    var area = document.getElementById('detailArea');
+    if(area) area.innerHTML = '<div class="empty-note">読み込みに問題が発生しました。ページを再読み込みしてください。</div>';
+  }catch(e2){}
+}
+
+});
+</script>
+
+<footer style="text-align: center; font-size: 0.75rem; color: #888; margin-top: 3rem; padding: 1rem 0.5rem; line-height: 1.5;">
+  <p style="margin-bottom: 0.5rem;">【ご利用について】</p>
+  <p style="margin-bottom: 0.5rem;">本アプリの利用に伴うトラブルやデータ損失等について、開発者は一切の責任を負いかねます。</p>
+  <p style="margin-bottom: 0.5rem;">ご意見・不具合のご報告は X（<a href="https://x.com/lblt_labo" target="_blank" rel="noopener" style="color: #666; text-decoration: underline;">@lblt_labo</a>）までお願いいたします。</p>
+  <p style="margin-top: 0.5rem;"><a href="https://ofuse.me/lbltlabo/letter" target="_blank" rel="noopener noreferrer" style="color: #666; text-decoration: underline;">☕️ 開発者を応援する / メッセージを送る</a></p>
+</footer>
+</body>
+</html>
