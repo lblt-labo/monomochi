@@ -248,10 +248,10 @@ document.addEventListener('DOMContentLoaded', function(){
 
 var CATS = [
   {name:'服飾・靴・かばん', color:'#5b9bd5', mark:'●'},
-  {name:'日用品・ツール', color:'#e8871e', mark:'▲'},
+  {name:'日用品・ツール・生活用品', color:'#e8871e', mark:'▲'},
   {name:'家具・家電・インテリア', color:'#4caf8a', mark:'■'},
   {name:'文房具・アクセサリ・小物', color:'#a888e0', mark:'◆'},
-  {name:'趣味・思い出・その他', color:'#e8659c', mark:'★'}
+  {name:'趣味・その他', color:'#e8659c', mark:'★'}
 ];
 
 var state = { items: [], settings: { passcodeEnabled:false, passcode:'', inspectionDate:'', installDismissed:false }, selectedId:null };
@@ -382,7 +382,7 @@ function renderDetail(){
   if(!area) return;
   var it = state.items.find(function(x){ return x.id === state.selectedId; });
   if(!it){
-    area.innerHTML = '<div class="empty-note">まだアイテムがありません。「＋ 追加」から、あなたの大切な物持ちアイテムを登録しましょう。</div>';
+    area.innerHTML = '<div class="empty-note">まだアイテムが登録されていません。「＋ 追加」から登録してください。</div>';
     return;
   }
   var cat = CATS[it.categoryIndex] || CATS[3];
@@ -391,7 +391,7 @@ function renderDetail(){
     checks.map(function(c){
       var d = new Date(c.date);
       var label = isNaN(d.getTime()) ? c.date : (d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate());
-      return '<div class="timeline-item"><b>'+label+'</b><span>お手入れ・無事確認</span></div>';
+      return '<div class="timeline-item"><b>'+label+'</b><span>状態確認・お手入れ</span></div>';
     }).join('') :
     '<div class="timeline-item">まだ記録がありません</div>';
 
@@ -401,17 +401,17 @@ function renderDetail(){
         '<h2><span style="color:'+cat.color+'">'+cat.mark+'</span>'+escapeHtml(it.name)+'</h2>' +
         '<div style="display:flex;gap:0.3rem;flex-shrink:0;">' +
           '<button class="icon-btn" id="editItemBtn" title="編集" aria-label="編集">✏️</button>' +
-          '<button class="icon-btn" id="deleteItemBtn" title="お別れする" aria-label="お別れする">🗑️</button>' +
+          '<button class="icon-btn" id="deleteItemBtn" title="削除" aria-label="削除">🗑️</button>' +
         '</div>' +
       '</div>' +
       '<div class="duration">'+escapeHtml(cat.name)+' ・ '+fmtDuration(it.startDate)+'</div>' +
       '<div class="memory-box">' +
-        '<div class="memory-label">出会いの記憶</div>' +
-        '<textarea id="memoryText" placeholder="いつ、どこで出会ったか。そっと書き留めておきましょう。">'+escapeHtml(it.memory||'')+'</textarea>' +
+        '<div class="memory-label">入手時のメモ</div>' +
+        '<textarea id="memoryText" placeholder="購入した場所や経緯など、簡単に記録しておけます。">'+escapeHtml(it.memory||'')+'</textarea>' +
       '</div>' +
-      '<button class="check-btn" id="checkBtn">🕯️ 今日の無事を確認・お手入れ完了</button>' +
+      '<button class="check-btn" id="checkBtn">🕯️ 状態確認・お手入れ完了</button>' +
       '<div>' +
-        '<div class="memory-label">歩みのタイムライン</div>' +
+        '<div class="memory-label">手入れ履歴</div>' +
         '<div class="timeline">'+timelineHtml+'</div>' +
       '</div>' +
     '</div>';
@@ -434,7 +434,7 @@ function renderDetail(){
         saveItems();
         renderTree();
         renderDetail();
-        showToast('灯りがひとつ、灯りました');
+        showToast('記録しました');
       }catch(e){}
     });
   }
@@ -453,10 +453,10 @@ function openAddItemModal(){
   var catOptions = CATS.map(function(c,i){ return '<option value="'+i+'">'+c.mark+' '+c.name+'</option>'; }).join('');
   openModal(
     '<h3>アイテムを追加</h3>' +
-    '<div class="field"><label>名前</label><input type="text" id="newItemName" placeholder="例：茶色の革靴"></div>' +
+    '<div class="field"><label>名称</label><input type="text" id="newItemName" placeholder="例：茶色の革靴"></div>' +
     '<div class="field"><label>カテゴリ</label><select id="newItemCat">'+catOptions+'</select></div>' +
     '<div class="field"><label>使い始めた日</label><input type="date" id="newItemDate"></div>' +
-    '<button class="primary-btn" id="saveNewItem">この子を迎える</button>'
+    '<button class="primary-btn" id="saveNewItem">登録する</button>'
   );
   var todayStr = new Date().toISOString().slice(0,10);
   var dateInput = document.getElementById('newItemDate');
@@ -468,7 +468,7 @@ function openAddItemModal(){
         var nameEl = document.getElementById('newItemName');
         var catEl = document.getElementById('newItemCat');
         var dateEl = document.getElementById('newItemDate');
-        var name = (nameEl && nameEl.value.trim()) || '名もなき相棒';
+        var name = (nameEl && nameEl.value.trim()) || '新しいアイテム';
         var catIdx = catEl ? parseInt(catEl.value,10) : 3;
         var dateVal = (dateEl && dateEl.value) || todayStr;
         var newItem = { id: uid(), name: name, categoryIndex: catIdx, startDate: dateVal, memory:'', checks:[] };
@@ -489,10 +489,10 @@ function openEditItemModal(it){
   }).join('');
   openModal(
     '<h3>アイテムを編集</h3>' +
-    '<div class="field"><label>名前</label><input type="text" id="editItemName" value="'+escapeHtml(it.name)+'"></div>' +
+    '<div class="field"><label>名称</label><input type="text" id="editItemName" value="'+escapeHtml(it.name)+'"></div>' +
     '<div class="field"><label>カテゴリ</label><select id="editItemCat">'+catOptions+'</select></div>' +
     '<div class="field"><label>使い始めた日</label><input type="date" id="editItemDate" value="'+escapeHtml(it.startDate||'')+'"></div>' +
-    '<div class="field"><label>出会いの記憶</label><input type="text" id="editItemMemory" value="'+escapeHtml(it.memory||'')+'"></div>' +
+    '<div class="field"><label>入手時のメモ</label><input type="text" id="editItemMemory" value="'+escapeHtml(it.memory||'')+'"></div>' +
     '<button class="primary-btn" id="saveEditItem">保存する</button>'
   );
   var saveBtn = document.getElementById('saveEditItem');
@@ -519,10 +519,10 @@ function openEditItemModal(it){
 /* ---------- delete item ---------- */
 function openDeleteConfirm(it){
   openModal(
-    '<h3>お別れしますか？</h3>' +
-    '<div class="help-block">本当にこの木（「'+escapeHtml(it.name)+'」）とお別れしますか？この操作は元に戻せません。</div>' +
-    '<button class="primary-btn" id="confirmDeleteBtn" style="background:var(--pink);">お別れする</button>' +
-    '<button class="ghost-btn" id="cancelDeleteBtn">やめておく</button>'
+    '<h3>削除の確認</h3>' +
+    '<div class="help-block">選択したアイテム（'+escapeHtml(it.name)+'）を削除しますか？この操作は元に戻せません。</div>' +
+    '<button class="primary-btn" id="confirmDeleteBtn" style="background:var(--pink);">削除する</button>' +
+    '<button class="ghost-btn" id="cancelDeleteBtn">キャンセル</button>'
   );
   var confirmBtn = document.getElementById('confirmDeleteBtn');
   if(confirmBtn){
@@ -535,7 +535,7 @@ function openDeleteConfirm(it){
         saveItems();
         closeModal();
         renderTabs(); renderDetail(); renderTree();
-        showToast('ありがとう、と伝えました');
+        showToast('削除しました');
       }catch(e){}
     });
   }
@@ -566,9 +566,9 @@ function closeModal(){
 function openHelp(){
   openModal(
     '<h3>使い方</h3>' +
-    '<div class="help-block"><b>モノモチの木とは</b><br>大切に使い続けているアイテムと過ごした時間を、静かに記録する手帳アプリです。使うたびに「無事を確認」すると、木にひとつずつ灯りが灯ります。</div>' +
-    '<div class="help-block"><b>丸い灯りの見方</b><br>色と形はアイテムのカテゴリを表します。青の●は服飾・靴・かばん、橙の▲は日用品・ツール、緑の■は家具・家電・インテリア、紫の◆は文房具・アクセサリ・小物、桃の★は趣味・思い出・その他です。灯りの数はお手入れした回数です。</div>' +
-    '<div class="help-block"><b>年次点検日の使い方</b><br>設定画面で年に一度の点検日（誕生日や記念日など）を決めておくと、その日に通知が届き、すべてのアイテムをまとめて確認できます。</div>'
+    '<div class="help-block"><b>モノモチの木とは</b><br>所有しているアイテムと使い続けてきた時間を記録する手帳アプリです。状態確認・お手入れを行うたびに、木にひとつずつ灯りが灯ります。</div>' +
+    '<div class="help-block"><b>丸い灯りの見方</b><br>色と形はアイテムのカテゴリを表します。青の●は服飾・靴・かばん、橙の▲は日用品・ツール・生活用品、緑の■は家具・家電・インテリア、紫の◆は文房具・アクセサリ・小物、桃の★は趣味・その他です。灯りの数は記録した回数を表します。</div>' +
+    '<div class="help-block"><b>年次点検日の使い方</b><br>設定画面で年に一度の点検日（年末年始や誕生日など）を設定しておくと、その日に通知が届き、すべてのアイテムをまとめて確認できます。</div>'
   );
 }
 
@@ -702,9 +702,9 @@ function renderInspectionStep(){
   overlay.classList.add('show');
   if(inspectionIdx >= inspectionQueue.length){
     overlay.innerHTML =
-      '<div class="mark-big">✨🌳✨</div>' +
-      '<h2>今年も無事、点検完了です</h2>' +
-      '<div style="color:var(--muted);font-size:0.85rem;">すべての大切なモノたちの無事を確認しました</div>' +
+      '<div class="mark-big">🌳</div>' +
+      '<h2>点検が完了しました</h2>' +
+      '<div style="color:var(--muted);font-size:0.85rem;">すべてのアイテムの状態を確認しました</div>' +
       '<button class="primary-btn" id="closeInspection" style="max-width:220px;">閉じる</button>';
     document.getElementById('closeInspection').addEventListener('click', function(){
       overlay.classList.remove('show');
@@ -718,7 +718,7 @@ function renderInspectionStep(){
     '<div class="mark-big" style="color:'+cat.color+'">'+cat.mark+'</div>' +
     '<h2>'+escapeHtml(it.name)+'</h2>' +
     '<div style="color:var(--muted);font-size:0.85rem;">'+(inspectionIdx+1)+' / '+inspectionQueue.length+'</div>' +
-    '<button class="primary-btn" id="stepCheckBtn" style="max-width:260px;">🕯️ 無事を確認</button>';
+    '<button class="primary-btn" id="stepCheckBtn" style="max-width:260px;">🕯️ 状態を確認</button>';
   document.getElementById('stepCheckBtn').addEventListener('click', function(){
     try{
       it.checks = it.checks || [];
@@ -740,7 +740,7 @@ function checkAnnualNotification(){
     if(mmdd === savedMmdd && 'Notification' in window && Notification.permission === 'granted'){
       var key = 'monomochi_notified_'+today.getFullYear();
       if(!localStorage.getItem(key)){
-        new Notification('モノモチの木', { body: '今日はモノモチの木の点検日です。大切なモノたちの無事を確認しましょう' });
+        new Notification('モノモチの木', { body: '今日はモノモチの木の点検日です。所有しているアイテムの状態を確認しましょう' });
         try{ localStorage.setItem(key,'1'); }catch(e){}
       }
     }
